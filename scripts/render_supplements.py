@@ -3,6 +3,7 @@ from html import escape
 from pathlib import Path
 import re
 from content_supplements import QUESTIONS, REFERENCES
+from layer_details import LAYER_DETAILS
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist' if (ROOT / 'dist' / 'index.html').is_file() else ROOT
@@ -81,6 +82,23 @@ def render_essentials(n):
     out.append('</div></section>')
     return '\n'.join(out)
 
+def render_layer_details(n):
+    lesson = LAYER_DETAILS[n]
+    cards = ''.join(
+        '<details class="scan-card"' + (' open' if i == 0 else '') + '><summary>' + escape(title) +
+        '</summary><div class="scan-body"><p>' + escape(body) + '</p></div></details>'
+        for i, (title, body) in enumerate(lesson['cards']))
+    title, body = lesson['example']
+    sources = ' · '.join('<a href="' + escape(url, quote=True) + '">' + escape(label) + '</a>'
+                         for label, url in lesson['sources'])
+    return ('<section class="chapter-section scan-section" id="layer-details">'
+            '<h2><span>Sizes, headers &amp; limits</span> ' + escape(lesson['title']) + '</h2>'
+            '<p>Understand the reason behind each number. Header sizes belong to specific protocols; '
+            'worked examples state the assumptions needed to use them.</p>'
+            '<div class="scan-grid">' + cards + '</div>'
+            '<div class="worked-example"><h3>' + escape(title) + '</h3><p>' + escape(body) + '</p></div>'
+            '<p class="table-note">Primary references: ' + sources + '</p></section>')
+
 def render_sources(n):
     return ('<section class="chapter-section sources" id="sources"><h2><span>Further reading</span> Standards and references</h2>'
             '<p>Use these primary references for protocol details and exceptions. Standards evolve; follow each RFC’s updates and errata for implementation work.</p><ul>' +
@@ -101,6 +119,9 @@ def main():
         s = path.read_text()
         marker = re.search(r'<section[^>]*id="book-scan"[^>]*>', s).group()
         s = replace_block(s, 'essentials', render_essentials(n), marker)
+        s = replace_block(s, 'layer-details', render_layer_details(n), marker)
+        if '<a href="#layer-details">' not in s:
+            s = s.replace('<li><a href="#book-scan">', '<li><a href="#layer-details">Sizes, headers &amp; limits</a></li><li><a href="#book-scan">', 1)
         s = replace_block(s, 'sources', render_sources(n), '<nav class="chapter-nav"')
         if '<a href="#essential-details">' not in s:
             s = s.replace('<li><a href="#book-scan">', '<li><a href="#essential-details">Details that matter</a></li><li><a href="#book-scan">', 1)
