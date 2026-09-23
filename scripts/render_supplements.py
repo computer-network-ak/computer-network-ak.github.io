@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 from content_supplements import QUESTIONS, REFERENCES
 from layer_details import LAYER_DETAILS
+from concept_foundations import FOUNDATIONS
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist' if (ROOT / 'dist' / 'index.html').is_file() else ROOT
@@ -113,10 +114,27 @@ def replace_block(text, key, markup, before):
     assert before in text, before
     return text.replace(before, block + '\n' + before, 1)
 
+def render_foundations(text, n):
+    for section_id, (definition, mechanism, example) in FOUNDATIONS[n].items():
+        key = 'foundation-' + section_id
+        start, end = f'<!-- {key}:start -->', f'<!-- {key}:end -->'
+        markup = ('<div class="concept-foundation">'
+                  '<p><strong>Definition.</strong> ' + escape(definition) + '</p>'
+                  '<p><strong>How it works.</strong> ' + escape(mechanism) + '</p>'
+                  '<p><strong>Example.</strong> ' + escape(example) + '</p></div>')
+        block = start + markup + end
+        if start in text:
+            text = re.sub(re.escape(start) + r'.*?' + re.escape(end), lambda _: block, text, flags=re.S)
+        else:
+            pattern = r'(<section[^>]*id="' + re.escape(section_id) + r'"[^>]*>\s*<h2>.*?</h2>)'
+            text, count = re.subn(pattern, lambda m: m.group(1) + block, text, count=1, flags=re.S)
+            assert count == 1, (n, section_id)
+    return text
+
 def main():
     for n in QUESTIONS:
         path = DIST / f'chapter{n}.html'
-        s = path.read_text()
+        s = render_foundations(path.read_text(), n)
         marker = re.search(r'<section[^>]*id="book-scan"[^>]*>', s).group()
         s = replace_block(s, 'essentials', render_essentials(n), marker)
         s = replace_block(s, 'layer-details', render_layer_details(n), marker)

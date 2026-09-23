@@ -70,3 +70,7 @@ For UDP, use `udp_server.py` and `udp_client.py` instead. These teaching program
 ### Layer details
 
 All eight chapters include a Sizes, headers & limits section with 32 explanations and eight worked examples. Edit `scripts/layer_details.py`, then run `python3 scripts/render_supplements.py` and `python3 scripts/validate_site.py`. These sections supplement the 73 essential answers.
+
+### Core lesson introductions
+
+The 59 maintained introductions in `scripts/concept_foundations.py` give each core lesson a definition, mechanism, and example. The expanded packet/circuit switching lesson is maintained directly in `chapter1.html`. Regenerate and validate after editing the introduction data.
