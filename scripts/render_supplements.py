@@ -41,6 +41,35 @@ TABLES = {
     ['If the edge performs source NAT', 'Translated public IP → server IP', 'Still the local outgoing and next-hop MACs']]) + '<p class="table-note">A layer-2 switch normally preserves Ethernet source/destination addresses while bridging. A router creates the next link frame. Not every Internet link is Ethernet.</p>'
 }
 
+
+# Keep the byte budget beside the network-layer addressing examples.
+TABLES[4] += (
+    '<div id="mtu-header-budget"><h3>Why 1500-byte MTU and 1460-byte TCP MSS?</h3>'
+    '<p><strong>1500 bytes is the conventional Ethernet payload limit.</strong> When Ethernet carries IP directly, that payload is the entire IP packet, including its IP header. It is a standardized link-format choice, not a limit calculated from the IPv4 address size or the TCP header. Larger packets amortize framing and processing overhead; smaller packets limit the time one transmission occupies a link and require less buffering. These are the engineering tradeoffs behind choosing a bounded frame size; they do not mathematically single out 1500. Compatibility with the established Ethernet format explains why this value remains common.</p>'
+    '<p>MTU means <strong>Maximum Transmission Unit</strong>: here, the largest IP packet a link can carry without IP fragmentation. Other links, tunnels, and configured jumbo frames can have different MTUs. Path MTU is the smallest link MTU along the path. See <a href="https://www.rfc-editor.org/rfc/rfc894.html">RFC 894: IP over Ethernet</a>.</p>'
+    '<div class="worked-example"><h4>Follow the bytes: untagged Ethernet, IPv4, TCP, no options</h4>'
+    '<p><code>14 Ethernet + [20 IPv4 + 20 TCP + 1460 TCP data] + 4 FCS = 1518 bytes</code></p>'
+    '<p>The bracketed IP packet is <strong>1500 bytes</strong>. TCP MSS counts only TCP data: <strong>1500 − 20 − 20 = 1460 bytes</strong>. The complete TCP segment is 1480 bytes. Do not subtract the Ethernet header or FCS again: both are already outside the IP MTU.</p></div>'
+    + table('Which headers count toward the IP MTU?', ['Component', 'Size', 'Purpose and counting rule'], [
+        ['Ethernet II header', '14 bytes, untagged', 'Destination MAC (6), source MAC (6), EtherType (2). Local-link delivery; outside IP MTU.'],
+        ['IPv4 header', '20–60 bytes', 'Version/IHL, DSCP/ECN, total length, identification, flags/fragment offset, TTL, protocol, header checksum, source/destination addresses, optional options/padding. Inside MTU. IHL counts 32-bit words: 5 means 20 bytes.'],
+        ['TCP header', '20–60 bytes', 'Ports (4 bytes total), sequence (4), acknowledgment (4), data offset/reserved/flags (2), receive window (2), checksum (2), urgent pointer (2), then optional options/padding. Inside MTU, outside MSS. Data offset counts 32-bit words.'],
+        ['TCP data', '1460 bytes in this example', 'Bytes delivered by TCP; may include TLS or application headers, so useful file content can be smaller.'],
+        ['Ethernet FCS trailer', '4 bytes', 'CRC error detection for the frame; outside IP MTU.'],
+        ['Preamble + start delimiter; interframe gap', '8 bytes; 12 byte-times', 'Synchronization and spacing on the link; outside the 1518-byte frame count. The gap is idle time, not a packet header.']])
+    + '<p>An 802.1Q VLAN tag adds 4 bytes: a conventional tagged frame can be 1522 bytes while still carrying a 1500-byte IP packet. Do not automatically reduce IP MTU to 1496. Jumbo frames require compatible configuration along the relevant path.</p>'
+    '<h4>Why the usable TCP data size changes</h4>'
+    + table('Payload budgets, assuming no fragmentation and a sufficient peer MSS', ['Case', 'Calculation', 'TCP data limit'], [
+        ['IPv4, minimum headers', '1500 − 20 − 20', '1460 bytes'],
+        ['IPv4, 12 bytes of TCP options/padding', '1500 − 20 − 32', '1448 bytes'],
+        ['IPv6, no extension headers or TCP options', '1500 − 40 − 20', '1440 bytes'],
+        ['An effective IPv4 path MTU of 1492', '1492 − 20 − 20', '1452 bytes']])
+    + '<p>The IPv6 base header is fixed at 40 bytes: version/traffic class/flow label, payload length, next header, hop limit, and two 16-byte addresses. Extension headers consume additional space. Unlike IPv4, its base header has no checksum. UDP has an 8-byte header and no TCP MSS option; with minimum IPv4 headers, its unfragmented payload budget at MTU 1500 is 1472 bytes.</p>'
+    '<p>Each endpoint advertises its receive MSS in a SYN-bearing segment; the values can differ by direction. The advertised value normally subtracts only fixed IP and TCP headers. The sender must then reduce actual data for options it uses and respect the path MTU as well as the peer limit. Thus an advertised MSS of 1460 can coexist with 1448-byte data segments when TCP options occupy 12 extra bytes. MSS is a ceiling, not a requirement to fill every segment. See <a href="https://www.rfc-editor.org/rfc/rfc9293.html#section-3.7.1">RFC 9293, section 3.7.1</a>.</p>'
+    '<p>Tunnel headers consume outer-packet space and may lower the inner MTU. TCP segmentation happens at the sender; IP fragmentation is a separate operation. IPv4 routers may fragment if permitted, whereas IPv6 routers return Packet Too Big instead. Path MTU discovery helps the sender choose packets that fit.</p>'
+    '<p><strong>Quick check:</strong> Is 1460 always the maximum? No. It is the familiar IPv4/TCP result for MTU 1500 with minimum headers. With a 9000-byte IP MTU and minimum headers, the corresponding budget is 8960 bytes, if the peer and path support it.</p></div>'
+)
+
 def render_essentials(n):
     out = ['<section class="chapter-section essentials" id="essential-details">',
            '<h2><span>Essential details</span> Details that matter</h2>',
