@@ -1,6 +1,6 @@
 (() => {
  'use strict';
- const host=document.querySelector('#physical-signal-lab');if(!host)return;
+ const host=document.querySelector('#physical-experiments');if(!host)return;
  const bits=[1,0,1,1,0,0,1,0], ns='http://www.w3.org/2000/svg';let cursor=0,timer=null;
  const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
  const svgEl=(tag,attrs)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);return e;};
