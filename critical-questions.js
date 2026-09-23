@@ -286,6 +286,9 @@
 
     const render = () => {
       const item = questions[selected];
+      const panel = root.querySelector('.critical-workbench');
+      panel.setAttribute('role', 'tabpanel');
+      panel.setAttribute('aria-labelledby', `critical-tab-${escapeId(root.dataset.criticalChapter)}-${selected}`);
       questionNumber.textContent = `QUESTION ${selected + 1} OF ${questions.length}`;
       questionTitle.textContent = item.q;
       setup.textContent = item.setup;
@@ -293,6 +296,7 @@
         const active = position === selected;
         tab.classList.toggle("active", active);
         tab.setAttribute("aria-selected", String(active));
+        tab.tabIndex = active ? 0 : -1;
       });
       root.querySelectorAll("[data-critical-step]").forEach((node, position) => {
         node.classList.toggle("done", position < index);
@@ -325,10 +329,22 @@
       button.type = "button";
       button.dataset.criticalTab = String(position);
       button.setAttribute("role", "tab");
+      button.id = `critical-tab-${escapeId(root.dataset.criticalChapter)}-${position}`;
       button.setAttribute("aria-controls", `critical-question-${escapeId(root.dataset.criticalChapter)}`);
       button.innerHTML = `<b>Q${position + 1}</b><span></span>`;
       button.querySelector("span").textContent = item.q;
       button.addEventListener("click", () => selectQuestion(position));
+      button.addEventListener("keydown", (event) => {
+        let destination;
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") destination = (position + 1) % questions.length;
+        else if (event.key === "ArrowLeft" || event.key === "ArrowUp") destination = (position + questions.length - 1) % questions.length;
+        else if (event.key === "Home") destination = 0;
+        else if (event.key === "End") destination = questions.length - 1;
+        else return;
+        event.preventDefault();
+        selectQuestion(destination);
+        tabs.querySelectorAll('[role="tab"]')[destination].focus();
+      });
       tabs.append(button);
     });
 

@@ -5,22 +5,42 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+  // Deep links must reveal answers inside native disclosures before scrolling.
+  function revealHashTarget() {
+    let id;
+    try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    const target = document.getElementById(id);
+    if (!target) return;
+    let ancestor = target;
+    while (ancestor) {
+      if (ancestor.tagName === "DETAILS") ancestor.open = true;
+      ancestor = ancestor.parentElement;
+    }
+    requestAnimationFrame(() => target.scrollIntoView({ block: "start", behavior: "instant" }));
+  }
+  addEventListener("hashchange", revealHashTarget);
+  revealHashTarget();
+  addEventListener("load", () => {
+    // Injected lesson styles and downloaded fonts can change section positions.
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(revealHashTarget);
+  }, { once: true });
+
   if (!document.querySelector('link[href^="visuals.css"]')) {
     const visualStyles = document.createElement("link");
     visualStyles.rel = "stylesheet";
-    visualStyles.href = "visuals.css?v=33";
+    visualStyles.href = "visuals.css?v=35";
     document.head.appendChild(visualStyles);
   }
 
   if (!document.querySelector('script[src^="interactions.js"]')) {
     const interactionScript = document.createElement("script");
-    interactionScript.src = "interactions.js?v=33";
+    interactionScript.src = "interactions.js?v=35";
     document.head.appendChild(interactionScript);
   }
 
   if (!document.querySelector('script[src^="critical-questions.js"]')) {
     const criticalScript = document.createElement("script");
-    criticalScript.src = "critical-questions.js?v=33";
+    criticalScript.src = "critical-questions.js?v=35";
     document.head.appendChild(criticalScript);
   }
 
