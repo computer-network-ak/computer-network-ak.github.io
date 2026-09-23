@@ -5,7 +5,7 @@ import re
 from content_supplements import QUESTIONS, REFERENCES
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / 'dist'
+DIST = ROOT / 'dist' if (ROOT / 'dist' / 'index.html').is_file() else ROOT
 
 def table(caption, headings, rows):
     return ('<div class="table-scroll" tabindex="0" role="region" aria-label="' + escape(caption) + '">'

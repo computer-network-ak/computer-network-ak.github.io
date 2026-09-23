@@ -6,7 +6,7 @@ from urllib.parse import urlsplit, unquote
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / 'dist'
+DIST = ROOT / 'dist' if (ROOT / 'dist' / 'index.html').is_file() else ROOT
 
 class Page(HTMLParser):
     def __init__(self, path):
