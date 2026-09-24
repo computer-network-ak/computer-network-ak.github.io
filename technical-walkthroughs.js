@@ -63,6 +63,7 @@
   const heading=make('h4'), description=make('p');status.append(heading,description);
   const metrics=make('dl','walk-metrics');
   const controls=make('div','walk-controls');
+  const speedLabel=make('label','','Speed '), speed=make('select');speed.setAttribute('aria-label','Walkthrough speed');for(const [value,text] of [['1800','Normal'],['900','Fast'],['4200','Reading pace']]){const o=make('option','',text);o.value=value;speed.append(o);}speedLabel.append(speed);controls.append(speedLabel);
   const play=make('button','','Play'), next=make('button','','Next step'),reset=make('button','','Reset');
   for(const b of [play,next,reset]) {b.type='button';controls.append(b);}
   root.append(flow,track,status,metrics,controls,make('p','table-note',data.note));
@@ -77,7 +78,8 @@
     next.disabled=position===data.steps.length-1;play.textContent=timer?'Pause':next.disabled?'Replay':'Play';
   }
   function advance(){if(position<data.steps.length-1)position++;if(position===data.steps.length-1)stop();render();}
-  play.addEventListener('click',()=>{if(timer){stop();render();return;}if(position===data.steps.length-1)position=-1;timer=setInterval(advance,4200);advance();});
+  play.addEventListener('click',()=>{if(timer){stop();render();return;}if(position===data.steps.length-1)position=-1;timer=setInterval(advance,Number(speed.value));advance();});
+  speed.addEventListener('change',()=>{if(timer){stop();timer=setInterval(advance,Number(speed.value));render();}});
   next.addEventListener('click',()=>{stop();advance();});reset.addEventListener('click',()=>{stop();position=-1;render();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();render();}});
   render();
